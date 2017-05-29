@@ -3,6 +3,8 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "blockencodings.h"
+#include "chainparams.h"
+#include "config.h"
 #include "consensus/merkle.h"
 #include "chainparams.h"
 #include "random.h"
@@ -74,9 +76,10 @@ BOOST_AUTO_TEST_CASE(SimpleRoundTripTest)
         CBlockHeaderAndShortTxIDs shortIDs2;
         stream >> shortIDs2;
 
-        PartiallyDownloadedBlock partialBlock(&pool);
-        BOOST_CHECK(partialBlock.InitData(shortIDs2, extra_txn) == READ_STATUS_OK);
-        BOOST_CHECK( partialBlock.IsTxAvailable(0));
+        PartiallyDownloadedBlock partialBlock(GetConfig(), &pool);
+        BOOST_CHECK(partialBlock.InitData(shortIDs2, extra_txn) ==
+                    READ_STATUS_OK);
+        BOOST_CHECK(partialBlock.IsTxAvailable(0));
         BOOST_CHECK(!partialBlock.IsTxAvailable(1));
         BOOST_CHECK( partialBlock.IsTxAvailable(2));
 
@@ -180,8 +183,9 @@ BOOST_AUTO_TEST_CASE(NonCoinbasePreforwardRTTest)
         CBlockHeaderAndShortTxIDs shortIDs2;
         stream >> shortIDs2;
 
-        PartiallyDownloadedBlock partialBlock(&pool);
-        BOOST_CHECK(partialBlock.InitData(shortIDs2, extra_txn) == READ_STATUS_OK);
+        PartiallyDownloadedBlock partialBlock(GetConfig(), &pool);
+        BOOST_CHECK(partialBlock.InitData(shortIDs2, extra_txn) ==
+                    READ_STATUS_OK);
         BOOST_CHECK(!partialBlock.IsTxAvailable(0));
         BOOST_CHECK( partialBlock.IsTxAvailable(1));
         BOOST_CHECK( partialBlock.IsTxAvailable(2));
@@ -246,11 +250,12 @@ BOOST_AUTO_TEST_CASE(SufficientPreforwardRTTest)
         CBlockHeaderAndShortTxIDs shortIDs2;
         stream >> shortIDs2;
 
-        PartiallyDownloadedBlock partialBlock(&pool);
-        BOOST_CHECK(partialBlock.InitData(shortIDs2, extra_txn) == READ_STATUS_OK);
-        BOOST_CHECK( partialBlock.IsTxAvailable(0));
-        BOOST_CHECK( partialBlock.IsTxAvailable(1));
-        BOOST_CHECK( partialBlock.IsTxAvailable(2));
+        PartiallyDownloadedBlock partialBlock(GetConfig(), &pool);
+        BOOST_CHECK(partialBlock.InitData(shortIDs2, extra_txn) ==
+                    READ_STATUS_OK);
+        BOOST_CHECK(partialBlock.IsTxAvailable(0));
+        BOOST_CHECK(partialBlock.IsTxAvailable(1));
+        BOOST_CHECK(partialBlock.IsTxAvailable(2));
 
         BOOST_CHECK_EQUAL(pool.mapTx.find(block.vtx[1]->GetId())->GetSharedTx().use_count(), SHARED_TX_OFFSET + 1);
 
@@ -301,8 +306,9 @@ BOOST_AUTO_TEST_CASE(EmptyBlockRoundTripTest)
         CBlockHeaderAndShortTxIDs shortIDs2;
         stream >> shortIDs2;
 
-        PartiallyDownloadedBlock partialBlock(&pool);
-        BOOST_CHECK(partialBlock.InitData(shortIDs2, extra_txn) == READ_STATUS_OK);
+        PartiallyDownloadedBlock partialBlock(GetConfig(), &pool);
+        BOOST_CHECK(partialBlock.InitData(shortIDs2, extra_txn) ==
+                    READ_STATUS_OK);
         BOOST_CHECK(partialBlock.IsTxAvailable(0));
 
         CBlock block2;
