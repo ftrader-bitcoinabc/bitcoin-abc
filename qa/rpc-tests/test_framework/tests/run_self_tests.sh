@@ -31,6 +31,17 @@ else
 fi
 
 export PYTHONPATH="$PYTHONPATH:$RPC_TESTS_DIR"
+export SRCDIR=${SRCDIR:="$RPC_TESTS_DIR/../.."}
+export BITCOIND=${BITCOIND:="$SRCDIR/src/bitcoind"}
+
+if [ ! -x "$BITCOIND" ]
+then
+    echo "No bitcoin daemon found in $BITCOIND ."
+    echo "Please ensure that you built the software."
+    echo "If need be, set (export) BITCOIND pointing at your bitcoind binary."
+    cd "$start_folder"
+    exit 1
+fi
 
 # Go to where the tests are located
 cd $RPC_TESTS_DIR/test_framework/tests
@@ -41,7 +52,7 @@ echo "Running test framework self-tests..."
 for t in *.py
 do
     echo "`date -u`: Starting self-test: $t"
-    SRCDIR=$RPC_TESTS_DIR/../.. python3 ./$t
+    python3 ./$t
     echo "`date -u`: Finished self-test: $t"
     echo
 done

@@ -250,7 +250,7 @@ def initialize_chain(test_dir, num_nodes, cachedir):
         # Create cache directories, run bitcoinds:
         for i in range(MAX_NODES):
             datadir=initialize_datadir(cachedir, i)
-            args = [ os.getenv("BITCOIND", "bitcoind"), "-server", "-keypool=1", "-datadir="+datadir, "-discover=0" ]
+            args = [ os.getenv("BITCOIND", DEFAULT_BITCOIND), "-server", "-keypool=1", "-datadir="+datadir, "-discover=0" ]
             if i > 0:
                 args.append("-connect=127.0.0.1:"+str(p2p_port(0)))
             bitcoind_processes[i] = subprocess.Popen(args)
@@ -349,9 +349,44 @@ def locate_bitcoind_binary():
                             os.path.join(src_dir_cand, 'src', DEFAULT_BITCOIND)):
             bitcoind_binary = os.path.join(src_dir_cand, 'src', DEFAULT_BITCOIND)
         else:
-            sys.stderr.write("Unable to locate bitcoind for this test.\n")
-            sys.exit(1)
+            return None
     return bitcoind_binary
+
+
+def get_canonical_bitcoin_binary(proposed_binary=DEFAULT_BITCOIND):
+    '''
+    Takes the proposed binary value passed in and checks if it exists
+    and returns the absolute path to it.
+    If there is a problem, it raises a ValueError with an appropriate
+    error message which higher layers print out.
+    '''
+    def raise_error(msg):
+        '''
+        Raise an ValueError based on msg, with some standard blurb
+        on separate line.
+        '''
+        blurb = "Try specifying using --testbinary option, " + \
+                "or set BITCOIND environment variable."
+        raise ValueError(msg + '\n' + blurb)
+
+    srcdir = os.getenv('SRCDIR', '.')
+    # Raise error if SRCDIR is set to something that is not a folder.
+    if not os.path.isdir(srcdir):
+        raise_error("Unable to locate SRCDIR (%s)" % srcdir)
+    # If proposed binary is not default, it must exist, else error out.
+    if (proposed_binary != DEFAULT_BITCOIND
+        and not os.path.exists(proposed_binary)):
+        err_msg = "Unable to locate specified binary for this test " + \
+                  "(%s)." % proposed_binary
+        raise_error(err_msg)
+    if proposed_binary == DEFAULT_BITCOIND:
+        expected_binary = os.path.join(srcdir, 'src', DEFAULT_BITCOIND)
+    else:
+        expected_binary = proposed_binary
+    if not os.path.exists(expected_binary):
+        raise_error("Unable to locate bitcoind binary (%s)" % expected_binary)
+    else:
+        return expected_binary
 
 
 def start_node(i, dirname, extra_args=None, rpchost=None, timewait=None, binary=None, stderr_checker=None):
@@ -361,9 +396,28 @@ def start_node(i, dirname, extra_args=None, rpchost=None, timewait=None, binary=
     Its output_file_obj will be connected to the stderr of the bitcoind process.
     """
     datadir = os.path.join(dirname, "node"+str(i))
+    if binary:
+        unchecked_binary = binary[i] if type(binary) == list else binary
+    else:
+        unchecked_binary = os.getenv('BITCOIND', DEFAULT_BITCOIND)
+    checked_binary = None
     if binary is None:
-        binary = locate_bitcoind_binary()
-    args = [ binary, "-datadir="+datadir, "-server", "-keypool=1", "-discover=0", "-rest", "-mocktime="+str(get_mocktime()) ]
+        # User did not specify binary - look in most common places.
+        checked_binary = locate_bitcoind_binary()
+        if not checked_binary:
+            raise ValueError("Unable to locate bitcoind for this test.\n"
+                             "Try specifying using --testbinary option, "
+                             "or set BITCOIND environment variable.")
+    else:
+        try:
+            # Verify that we have a binary.
+            # Called function may throw ValueError with reasons why
+            # binary cannot be found.
+            checked_binary = get_canonical_bitcoin_binary(unchecked_binary)
+        except ValueError as e:
+            raise
+
+    args = [ checked_binary, "-datadir="+datadir, "-server", "-keypool=1", "-discover=0", "-rest", "-mocktime="+str(get_mocktime()) ]
     if extra_args is not None: args.extend(extra_args)
     if stderr_checker:
         assert(isinstance(stderr_checker, OutputChecker))
@@ -397,15 +451,28 @@ def start_nodes(num_nodes, dirname, extra_args=None, rpchost=None, timewait=None
         stderr_checkers = [ None for _ in range(num_nodes) ]
     if binary is None: binary = [ None for _ in range(num_nodes) ]
     rpcs = []
+    nodes_failed = False
     try:
         for i in range(num_nodes):
             rpcs.append(start_node(i, dirname, extra_args[i],
                                    rpchost, timewait=timewait,
                                    binary=binary[i],
                                    stderr_checker=stderr_checkers[i]))
-    except: # If one node failed to start, stop the others
-        stop_nodes(rpcs)
+    except ValueError as e:
+        if 'Unable to locate' in str(e):
+            # Do not raise if it's a failure to locate - just write the
+            # error message to stderr and exit.
+            # This avoids a lengthy stack trace for the user's simple
+            # misconfiguration error.
+            sys.stderr.write(str(e) + '\n')
+            sys.exit(1)
+        # It was some other exception - just raise it
         raise
+    except: # If one node failed to start, stop the others
+        nodes_failed = True
+    finally: # If any one node has failed to start, stop others
+        if nodes_failed:
+            stop_nodes(rpcs)
     return rpcs
 
 def log_filename(dirname, n_node, logname):
@@ -421,8 +488,9 @@ def stop_node(node, i):
     del bitcoind_processes[i]
 
 def stop_nodes(nodes):
-    for i, node in enumerate(nodes):
-        stop_node(node, i)
+    if nodes:
+        for i, node in enumerate(nodes):
+            stop_node(node, i)
     assert not bitcoind_processes.values() # All connections must be gone now
 
 def set_node_times(nodes, t):
