@@ -5,14 +5,13 @@
 #ifndef _BITCOIN_CUCKOOCACHE_H_
 #define _BITCOIN_CUCKOOCACHE_H_
 
-#include <array>
 #include <algorithm>
+#include <array>
 #include <atomic>
-#include <cstring>
 #include <cmath>
+#include <cstring>
 #include <memory>
 #include <vector>
-
 
 /** namespace CuckooCache provides high performance cache primitives
  *
@@ -24,8 +23,7 @@
  * is lockfree for erase operations. Elements are lazily erased on the next
  * insert.
  */
-namespace CuckooCache
-{
+namespace CuckooCache {
 /** bit_packed_atomic_flags implements a container for garbage collection flags
  * that is only thread unsafe on calls to setup. This class bit-packs collection
  * flags for memory efficiency.
@@ -39,8 +37,7 @@ namespace CuckooCache
  * of 8 for setup, but it will be safe if that is not the case as well.
  *
  */
-class bit_packed_atomic_flags
-{
+class bit_packed_atomic_flags {
     std::unique_ptr<std::atomic<uint8_t>[]> mem;
 
 public:
@@ -58,8 +55,7 @@ public:
      * @post All calls to bit_is_set (without subsequent bit_unset) will return
      * true.
      */
-    bit_packed_atomic_flags(uint32_t size)
-    {
+    bit_packed_atomic_flags(uint32_t size) {
         // pad out the size if needed
         size = (size + 7) / 8;
         mem.reset(new std::atomic<uint8_t>[size]);
@@ -67,7 +63,8 @@ public:
             mem[i].store(0xFF);
     };
 
-    /** setup marks all entries and ensures that bit_packed_atomic_flags can store
+    /** setup marks all entries and ensures that bit_packed_atomic_flags can
+     * store
      * at least size entries
      *
      * @param b the number of elements to allocate space for
@@ -76,8 +73,7 @@ public:
      * @post All calls to bit_is_set (without subsequent bit_unset) will return
      * true.
      */
-    inline void setup(uint32_t b)
-    {
+    inline void setup(uint32_t b) {
         bit_packed_atomic_flags d(b);
         std::swap(mem, d.mem);
     }
@@ -89,8 +85,7 @@ public:
      * ordering) to bit_is_set(s) == true.
      *
      */
-    inline void bit_set(uint32_t s)
-    {
+    inline void bit_set(uint32_t s) {
         mem[s >> 3].fetch_or(1 << (s & 7), std::memory_order_relaxed);
     }
 
@@ -100,8 +95,7 @@ public:
      * @post immediately subsequent call (assuming proper external memory
      * ordering) to bit_is_set(s) == false.
      */
-    inline void bit_unset(uint32_t s)
-    {
+    inline void bit_unset(uint32_t s) {
         mem[s >> 3].fetch_and(~(1 << (s & 7)), std::memory_order_relaxed);
     }
 
@@ -110,8 +104,7 @@ public:
      * @param s the index of the entry to read.
      * @returns if the bit at index s was set.
      * */
-    inline bool bit_is_set(uint32_t s) const
-    {
+    inline bool bit_is_set(uint32_t s) const {
         return (1 << (s & 7)) & mem[s >> 3].load(std::memory_order_relaxed);
     }
 };
@@ -149,16 +142,15 @@ public:
  *
  * Note on function names:
  *   - The name "allow_erase" is used because the real discard happens later.
- *   - The name "please_keep" is used because elements may be erased anyways on insert.
+ *   - The name "please_keep" is used because elements may be erased anyways on
+ * insert.
  *
  * @tparam Element should be a movable and copyable type
  * @tparam Hash should be a function/callable which takes a template parameter
  * hash_select and an Element and extracts a hash from it. Should return
  * high-entropy hashes for `Hash h; h<0>(e) ... h<7>(e)`.
  */
-template <typename Element, typename Hash>
-class cache
-{
+template <typename Element, typename Hash> class cache {
 private:
     /** table stores all the elements */
     std::vector<Element> table;
@@ -215,54 +207,45 @@ private:
      * @param e the element whose hashes will be returned
      * @returns std::array<uint32_t, 8> of deterministic hashes derived from e
      */
-    inline std::array<uint32_t, 8> compute_hashes(const Element& e) const
-    {
-        return {{hash_function.template operator()<0>(e) & hash_mask,
-                 hash_function.template operator()<1>(e) & hash_mask,
-                 hash_function.template operator()<2>(e) & hash_mask,
-                 hash_function.template operator()<3>(e) & hash_mask,
-                 hash_function.template operator()<4>(e) & hash_mask,
-                 hash_function.template operator()<5>(e) & hash_mask,
-                 hash_function.template operator()<6>(e) & hash_mask,
-                 hash_function.template operator()<7>(e) & hash_mask}};
+    inline std::array<uint32_t, 8> compute_hashes(const Element &e) const {
+        return {{hash_function.template operator() < 0 > (e)&hash_mask,
+                 hash_function.template operator() < 1 > (e)&hash_mask,
+                 hash_function.template operator() < 2 > (e)&hash_mask,
+                 hash_function.template operator() < 3 > (e)&hash_mask,
+                 hash_function.template operator() < 4 > (e)&hash_mask,
+                 hash_function.template operator() < 5 > (e)&hash_mask,
+                 hash_function.template operator() < 6 > (e)&hash_mask,
+                 hash_function.template operator() < 7 > (e)&hash_mask}};
     }
 
     /* end
      * @returns a constexpr index that can never be inserted to */
-    constexpr uint32_t invalid() const
-    {
-        return ~(uint32_t)0;
-    }
+    constexpr uint32_t invalid() const { return ~(uint32_t)0; }
 
     /** allow_erase marks the element at index n as discardable. Threadsafe
      * without any concurrent insert.
      * @param n the index to allow erasure of
      */
-    inline void allow_erase(uint32_t n) const
-    {
-        collection_flags.bit_set(n);
-    }
+    inline void allow_erase(uint32_t n) const { collection_flags.bit_set(n); }
 
-    /** please_keep marks the element at index n as an entry that should be kept.
+    /** please_keep marks the element at index n as an entry that should be
+     * kept.
      * Threadsafe without any concurrent insert.
      * @param n the index to prioritize keeping
      */
-    inline void please_keep(uint32_t n) const
-    {
-        collection_flags.bit_unset(n);
-    }
+    inline void please_keep(uint32_t n) const { collection_flags.bit_unset(n); }
 
     /** epoch_check handles the changing of epochs for elements stored in the
      * cache. epoch_check should be run before every insert.
      *
-     * First, epoch_check decrements and checks the cheap heuristic, and then does
+     * First, epoch_check decrements and checks the cheap heuristic, and then
+     * does
      * a more expensive scan if the cheap heuristic runs out. If the expensive
      * scan succeeds, the epochs are aged and old elements are allow_erased. The
      * cheap heuristic is reset to retrigger after the worst case growth of the
      * current epoch's elements would exceed the epoch_size.
      */
-    void epoch_check()
-    {
+    void epoch_check() {
         if (epoch_heuristic_counter != 0) {
             --epoch_heuristic_counter;
             return;
@@ -271,8 +254,8 @@ private:
         // have not been erased.
         uint32_t epoch_unused_count = 0;
         for (uint32_t i = 0; i < size; ++i)
-            epoch_unused_count += epoch_flags[i] &&
-                                  !collection_flags.bit_is_set(i);
+            epoch_unused_count +=
+                epoch_flags[i] && !collection_flags.bit_is_set(i);
         // If there are more non-deleted entries in the current epoch than the
         // epoch size, then allow_erase on all elements in the old epoch (marked
         // false) and move all elements in the current epoch to the old epoch
@@ -291,18 +274,18 @@ private:
             // Ordinarily, we would have to sanity check std::min(epoch_size,
             // epoch_unused_count), but we already know that `epoch_unused_count
             // < epoch_size` in this branch
-            epoch_heuristic_counter = std::max(1u, std::max(epoch_size / 16,
-                        epoch_size - epoch_unused_count));
+            epoch_heuristic_counter = std::max(
+                1u, std::max(epoch_size / 16, epoch_size - epoch_unused_count));
     }
 
 public:
     /** You must always construct a cache with some elements via a subsequent
      * call to setup or setup_bytes, otherwise operations may segfault.
      */
-    cache() : table(), size(), collection_flags(0), epoch_flags(),
-    epoch_heuristic_counter(), epoch_size(), depth_limit(0), hash_function()
-    {
-    }
+    cache()
+        : table(), size(), collection_flags(0), epoch_flags(),
+          epoch_heuristic_counter(), epoch_size(), depth_limit(0),
+          hash_function() {}
 
     /** setup initializes the container to store no more than new_size
      * elements. setup rounds down to a power of two size.
@@ -312,12 +295,12 @@ public:
      * @param new_size the desired number of elements to store
      * @returns the maximum number of elements storable
      **/
-    uint32_t setup(uint32_t new_size)
-    {
+    uint32_t setup(uint32_t new_size) {
         // depth_limit must be at least one otherwise errors can occur.
-        depth_limit = static_cast<uint8_t>(std::log2(static_cast<float>(std::max((uint32_t)2, new_size))));
+        depth_limit = static_cast<uint8_t>(
+            std::log2(static_cast<float>(std::max((uint32_t)2, new_size))));
         size = 1 << depth_limit;
-        hash_mask = size-1;
+        hash_mask = size - 1;
         table.resize(size);
         collection_flags.setup(size);
         epoch_flags.resize(size);
@@ -340,9 +323,8 @@ public:
      * @returns the maximum number of elements storable (see setup()
      * documentation for more detail)
      */
-    uint32_t setup_bytes(size_t bytes)
-    {
-        return setup(bytes/sizeof(Element));
+    uint32_t setup_bytes(size_t bytes) {
+        return setup(bytes / sizeof(Element));
     }
 
     /** insert loops at most depth_limit times trying to insert a hash
@@ -365,8 +347,7 @@ public:
      * table, the entry attempted to be inserted is evicted.
      *
      */
-    inline void insert(Element e)
-    {
+    inline void insert(Element e) {
         epoch_check();
         uint32_t last_loc = invalid();
         bool last_epoch = true;
@@ -382,8 +363,7 @@ public:
         for (uint8_t depth = 0; depth < depth_limit; ++depth) {
             // First try to insert to an empty slot, if one exists
             for (uint32_t loc : locs) {
-                if (!collection_flags.bit_is_set(loc))
-                    continue;
+                if (!collection_flags.bit_is_set(loc)) continue;
                 table[loc] = std::move(e);
                 please_keep(loc);
                 epoch_flags[loc] = last_epoch;
@@ -392,10 +372,12 @@ public:
             /** Swap with the element at the location that was
             * not the last one looked at. Example:
             *
-            * 1) On first iteration, last_loc == invalid(), find returns last, so
+            * 1) On first iteration, last_loc == invalid(), find returns last,
+            * so
             *    last_loc defaults to locs[0].
             * 2) On further iterations, where last_loc == locs[k], last_loc will
-            *    go to locs[k+1 % 8], i.e., next of the 8 indices wrapping around
+            *    go to locs[k+1 % 8], i.e., next of the 8 indices wrapping
+            * around
             *    to 0 if needed.
             *
             * This prevents moving the element we just put in.
@@ -403,7 +385,10 @@ public:
             * The swap is not a move -- we must switch onto the evicted element
             * for the next iteration.
             */
-            last_loc = locs[(1 + (std::find(locs.begin(), locs.end(), last_loc) - locs.begin())) & 7];
+            last_loc =
+                locs[(1 + (std::find(locs.begin(), locs.end(), last_loc) -
+                           locs.begin())) &
+                     7];
             std::swap(table[last_loc], e);
             // Can't std::swap a std::vector<bool>::reference and a bool&.
             bool epoch = last_epoch;
@@ -440,13 +425,11 @@ public:
      * flag is set
      * @returns true if the element is found, false otherwise
      */
-    inline bool contains(const Element& e, const bool erase) const
-    {
+    inline bool contains(const Element &e, const bool erase) const {
         std::array<uint32_t, 8> locs = compute_hashes(e);
         for (uint32_t loc : locs)
             if (table[loc] == e) {
-                if (erase)
-                    allow_erase(loc);
+                if (erase) allow_erase(loc);
                 return true;
             }
         return false;

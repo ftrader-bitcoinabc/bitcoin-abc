@@ -16,7 +16,7 @@ void RandAddSeed();
 /**
  * Functions to gather random data via the OpenSSL PRNG
  */
-void GetRandBytes(unsigned char* buf, int num);
+void GetRandBytes(unsigned char *buf, int num);
 uint64_t GetRand(uint64_t nMax);
 int GetRandInt(int nMax);
 uint256 GetRandHash();
@@ -25,7 +25,7 @@ uint256 GetRandHash();
  * Function to gather random data from multiple sources, failing whenever any
  * of those source fail to provide a result.
  */
-void GetStrongRandBytes(unsigned char* buf, int num);
+void GetStrongRandBytes(unsigned char *buf, int num);
 
 /**
  * Fast randomness source. This is seeded once with secure random data, but
@@ -34,7 +34,7 @@ void GetStrongRandBytes(unsigned char* buf, int num);
  */
 class FastRandomContext {
 public:
-    explicit FastRandomContext(bool fDeterministic=false);
+    explicit FastRandomContext(bool fDeterministic = false);
 
     uint32_t rand32() {
         Rz = 36969 * (Rz & 65535) + (Rz >> 16);

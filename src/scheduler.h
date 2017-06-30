@@ -10,8 +10,8 @@
 // boost::thread / boost::function / boost::chrono should be ported to
 // std::thread / std::function / std::chrono when we support C++11.
 //
-#include <boost/function.hpp>
 #include <boost/chrono/chrono.hpp>
+#include <boost/function.hpp>
 #include <boost/thread.hpp>
 #include <map>
 
@@ -24,7 +24,8 @@
 // CScheduler* s = new CScheduler();
 // s->scheduleFromNow(doSomething, 11); // Assuming a: void doSomething() { }
 // s->scheduleFromNow(boost::bind(Class::func, this, argument), 3);
-// boost::thread* t = new boost::thread(boost::bind(CScheduler::serviceQueue, s));
+// boost::thread* t = new boost::thread(boost::bind(CScheduler::serviceQueue,
+// s));
 //
 // ... then at program shutdown, clean up the thread running serviceQueue:
 // t->interrupt();
@@ -33,8 +34,7 @@
 // delete s; // Must be done after thread is interrupted/joined.
 //
 
-class CScheduler
-{
+class CScheduler {
 public:
     CScheduler();
     ~CScheduler();
@@ -63,7 +63,7 @@ public:
     // Tell any threads running serviceQueue to stop as soon as they're
     // done servicing whatever task they're currently servicing (drain=false)
     // or when there is no work left to be done (drain=true)
-    void stop(bool drain=false);
+    void stop(bool drain = false);
 
     // Returns number of tasks waiting to be serviced,
     // and first and last task times
@@ -77,7 +77,9 @@ private:
     int nThreadsServicingQueue;
     bool stopRequested;
     bool stopWhenEmpty;
-    bool shouldStop() { return stopRequested || (stopWhenEmpty && taskQueue.empty()); }
+    bool shouldStop() {
+        return stopRequested || (stopWhenEmpty && taskQueue.empty());
+    }
 };
 
 #endif

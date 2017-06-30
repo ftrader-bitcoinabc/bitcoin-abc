@@ -15,8 +15,7 @@
     any current sleep, and after that point operator bool() will return true
     until reset.
 */
-class CThreadInterrupt
-{
+class CThreadInterrupt {
 public:
     explicit operator bool() const;
     void operator()();
@@ -31,4 +30,4 @@ private:
     std::atomic<bool> flag;
 };
 
-#endif //BITCOIN_THREADINTERRUPT_H
+#endif // BITCOIN_THREADINTERRUPT_H

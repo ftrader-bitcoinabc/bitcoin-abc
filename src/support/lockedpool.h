@@ -5,18 +5,17 @@
 #ifndef BITCOIN_SUPPORT_LOCKEDPOOL_H
 #define BITCOIN_SUPPORT_LOCKEDPOOL_H
 
-#include <stdint.h>
 #include <list>
 #include <map>
-#include <mutex>
 #include <memory>
+#include <mutex>
+#include <stdint.h>
 
 /**
  * OS-dependent allocation and deallocation of locked/pinned memory pages.
  * Abstract base class.
  */
-class LockedPageAllocator
-{
+class LockedPageAllocator {
 public:
     virtual ~LockedPageAllocator() {}
     /** Allocate and lock memory pages.
@@ -27,12 +26,12 @@ public:
      * return the memory, however the lockingSuccess flag will be false.
      * lockingSuccess is undefined if the allocation fails.
      */
-    virtual void* AllocateLocked(size_t len, bool *lockingSuccess) = 0;
+    virtual void *AllocateLocked(size_t len, bool *lockingSuccess) = 0;
 
     /** Unlock and free memory pages.
      * Clear the memory before unlocking.
      */
-    virtual void FreeLocked(void* addr, size_t len) = 0;
+    virtual void FreeLocked(void *addr, size_t len) = 0;
 
     /** Get the total limit on the amount of memory that may be locked by this
      * process, in bytes. Return size_t max if there is no limit or the limit
@@ -44,15 +43,13 @@ public:
 /* An arena manages a contiguous region of memory by dividing it into
  * chunks.
  */
-class Arena
-{
+class Arena {
 public:
     Arena(void *base, size_t size, size_t alignment);
     virtual ~Arena();
 
     /** Memory statistics. */
-    struct Stats
-    {
+    struct Stats {
         size_t used;
         size_t free;
         size_t total;
@@ -64,7 +61,7 @@ public:
      * Returns pointer on success, or 0 if memory is full or
      * the application tried to allocate 0 bytes.
      */
-    void* alloc(size_t size);
+    void *alloc(size_t size);
 
     /** Free a previously allocated chunk of memory.
      * Freeing the zero pointer has no effect.
@@ -84,45 +81,49 @@ public:
      * chunk starting addresses.
      */
     bool addressInArena(void *ptr) const { return ptr >= base && ptr < end; }
+
 private:
-    Arena(const Arena& other) = delete; // non construction-copyable
-    Arena& operator=(const Arena&) = delete; // non copyable
+    Arena(const Arena &other) = delete;       // non construction-copyable
+    Arena &operator=(const Arena &) = delete; // non copyable
 
     /** Map of chunk address to chunk information. This class makes use of the
      * sorted order to merge previous and next chunks during deallocation.
      */
-    std::map<char*, size_t> chunks_free;
-    std::map<char*, size_t> chunks_used;
+    std::map<char *, size_t> chunks_free;
+    std::map<char *, size_t> chunks_used;
     /** Base address of arena */
-    char* base;
+    char *base;
     /** End address of arena */
-    char* end;
+    char *end;
     /** Minimum chunk alignment */
     size_t alignment;
 };
 
 /** Pool for locked memory chunks.
  *
- * To avoid sensitive key data from being swapped to disk, the memory in this pool
+ * To avoid sensitive key data from being swapped to disk, the memory in this
+ * pool
  * is locked/pinned.
  *
- * An arena manages a contiguous region of memory. The pool starts out with one arena
+ * An arena manages a contiguous region of memory. The pool starts out with one
+ * arena
  * but can grow to multiple arenas if the need arises.
  *
- * Unlike a normal C heap, the administrative structures are separate from the managed
- * memory. This has been done as the sizes and bases of objects are not in themselves sensitive
+ * Unlike a normal C heap, the administrative structures are separate from the
+ * managed
+ * memory. This has been done as the sizes and bases of objects are not in
+ * themselves sensitive
  * information, as to conserve precious locked memory. In some operating systems
  * the amount of memory that can be locked is small.
  */
-class LockedPool
-{
+class LockedPool {
 public:
     /** Size of one arena of locked memory. This is a compromise.
      * Do not set this too low, as managing many arenas will increase
      * allocation and deallocation overhead. Setting it too high allocates
      * more locked memory from the OS than strictly necessary.
      */
-    static const size_t ARENA_SIZE = 256*1024;
+    static const size_t ARENA_SIZE = 256 * 1024;
     /** Chunk alignment. Another compromise. Setting this too high will waste
      * memory, setting it too low will facilitate fragmentation.
      */
@@ -133,8 +134,7 @@ public:
     typedef bool (*LockingFailed_Callback)();
 
     /** Memory statistics. */
-    struct Stats
-    {
+    struct Stats {
         size_t used;
         size_t free;
         size_t total;
@@ -146,18 +146,21 @@ public:
     /** Create a new LockedPool. This takes ownership of the MemoryPageLocker,
      * you can only instantiate this with LockedPool(std::move(...)).
      *
-     * The second argument is an optional callback when locking a newly allocated arena failed.
-     * If this callback is provided and returns false, the allocation fails (hard fail), if
+     * The second argument is an optional callback when locking a newly
+     * allocated arena failed.
+     * If this callback is provided and returns false, the allocation fails
+     * (hard fail), if
      * it returns true the allocation proceeds, but it could warn.
      */
-    LockedPool(std::unique_ptr<LockedPageAllocator> allocator, LockingFailed_Callback lf_cb_in = 0);
+    LockedPool(std::unique_ptr<LockedPageAllocator> allocator,
+               LockingFailed_Callback lf_cb_in = 0);
     ~LockedPool();
 
     /** Allocate size bytes from this arena.
      * Returns pointer on success, or 0 if memory is full or
      * the application tried to allocate 0 bytes.
      */
-    void* alloc(size_t size);
+    void *alloc(size_t size);
 
     /** Free a previously allocated chunk of memory.
      * Freeing the zero pointer has no effect.
@@ -167,18 +170,20 @@ public:
 
     /** Get pool usage statistics */
     Stats stats() const;
+
 private:
-    LockedPool(const LockedPool& other) = delete; // non construction-copyable
-    LockedPool& operator=(const LockedPool&) = delete; // non copyable
+    LockedPool(const LockedPool &other) = delete; // non construction-copyable
+    LockedPool &operator=(const LockedPool &) = delete; // non copyable
 
     std::unique_ptr<LockedPageAllocator> allocator;
 
     /** Create an arena from locked pages */
-    class LockedPageArena: public Arena
-    {
+    class LockedPageArena : public Arena {
     public:
-        LockedPageArena(LockedPageAllocator *alloc_in, void *base_in, size_t size, size_t align);
+        LockedPageArena(LockedPageAllocator *alloc_in, void *base_in,
+                        size_t size, size_t align);
         ~LockedPageArena();
+
     private:
         void *base;
         size_t size;
@@ -196,23 +201,26 @@ private:
 };
 
 /**
- * Singleton class to keep track of locked (ie, non-swappable) memory, for use in
+ * Singleton class to keep track of locked (ie, non-swappable) memory, for use
+ * in
  * std::allocator templates.
  *
- * Some implementations of the STL allocate memory in some constructors (i.e., see
- * MSVC's vector<T> implementation where it allocates 1 byte of memory in the allocator.)
- * Due to the unpredictable order of static initializers, we have to make sure the
+ * Some implementations of the STL allocate memory in some constructors (i.e.,
+ * see
+ * MSVC's vector<T> implementation where it allocates 1 byte of memory in the
+ * allocator.)
+ * Due to the unpredictable order of static initializers, we have to make sure
+ * the
  * LockedPoolManager instance exists before any other STL-based objects that use
  * secure_allocator are created. So instead of having LockedPoolManager also be
  * static-initialized, it is created on demand.
  */
-class LockedPoolManager : public LockedPool
-{
+class LockedPoolManager : public LockedPool {
 public:
     /** Return the current instance, or create it once */
-    static LockedPoolManager& Instance()
-    {
-        std::call_once(LockedPoolManager::init_flag, LockedPoolManager::CreateInstance);
+    static LockedPoolManager &Instance() {
+        std::call_once(LockedPoolManager::init_flag,
+                       LockedPoolManager::CreateInstance);
         return *LockedPoolManager::_instance;
     }
 
@@ -224,7 +232,7 @@ private:
     /** Called when locking fails, warn the user here */
     static bool LockingFailed();
 
-    static LockedPoolManager* _instance;
+    static LockedPoolManager *_instance;
     static std::once_flag init_flag;
 };
 
