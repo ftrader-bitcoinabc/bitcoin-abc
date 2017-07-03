@@ -2,6 +2,12 @@ sudo: required
 dist: trusty
 os: linux
 language: generic
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test:q
+    packages:
+      - g++6
 cache:
   directories:
   - depends/built
@@ -20,6 +26,7 @@ env:
     - SDK_URL=https://bitcoincore.org/depends-sources/sdks
     - PYTHON_DEBUG=1
     - WINEDEBUG=fixme-all
+    - MATRIX_EVAL="CC=gcc-6 && CXX=g++-6"
   matrix:
 # ARM
     - HOST=arm-linux-gnueabihf PACKAGES="g++-arm-linux-gnueabihf" DEP_OPTS="NO_QT=1" CHECK_DOC=0 GOAL="install" BITCOIN_CONFIG="--enable-glibc-back-compat --enable-reduce-exports"
@@ -38,6 +45,7 @@ env:
 
 before_install:
     - export PATH=$(echo $PATH | tr ':' "\n" | sed '/\/opt\/python/d' | tr "\n" ":" | sed "s|::|:|g")
+    - eval "${MATRIX_EVAL}"
 install:
     - if [ -n "$PPA" ]; then travis_retry sudo add-apt-repository "$PPA" -y; fi
     - if [ -n "$DPKG_ADD_ARCH" ]; then sudo dpkg --add-architecture "$DPKG_ADD_ARCH" ; fi
