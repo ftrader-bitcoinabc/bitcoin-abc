@@ -5,7 +5,7 @@ language: generic
 addons:
   apt:
     sources:
-      - ubuntu-toolchain-r-test:q
+      - ubuntu-toolchain-r-test
     packages:
       - g++6
 cache:
