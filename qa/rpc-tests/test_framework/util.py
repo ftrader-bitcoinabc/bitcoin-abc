@@ -26,6 +26,7 @@ import errno
 from . import coverage
 from .authproxy import AuthServiceProxy, JSONRPCException
 from .outputchecker import OutputChecker
+from .errors import UnableToLocateBitcoindError
 
 DEFAULT_BITCOIND = 'bitcoind'
 COVERAGE_DIR = None
@@ -362,12 +363,12 @@ def get_canonical_bitcoin_binary(proposed_binary=DEFAULT_BITCOIND):
     '''
     def raise_error(msg):
         '''
-        Raise an ValueError based on msg, with some standard blurb
-        on separate line.
+        Raise an UnableToLocateBitcoindError based on msg,
+        with some standard blurb on separate line.
         '''
         blurb = "Try specifying using --testbinary option, " + \
                 "or set BITCOIND environment variable."
-        raise ValueError(msg + '\n' + blurb)
+        raise UnableToLocateBitcoindError(msg + '\n' + blurb)
 
     srcdir = os.getenv('SRCDIR', '.')
     # Raise error if SRCDIR is set to something that is not a folder.
@@ -405,17 +406,15 @@ def start_node(i, dirname, extra_args=None, rpchost=None, timewait=None, binary=
         # User did not specify binary - look in most common places.
         checked_binary = locate_bitcoind_binary()
         if not checked_binary:
-            raise ValueError("Unable to locate bitcoind for this test.\n"
-                             "Try specifying using --testbinary option, "
-                             "or set BITCOIND environment variable.")
+            raise UnableToLocateBitcoindError(
+                      "Unable to locate bitcoind for this test.\n"
+                      "Try specifying using --testbinary option, "
+                      "or set BITCOIND environment variable.")
     else:
-        try:
-            # Verify that we have a binary.
-            # Called function may throw ValueError with reasons why
-            # binary cannot be found.
-            checked_binary = get_canonical_bitcoin_binary(unchecked_binary)
-        except ValueError as e:
-            raise
+        # Verify that we have a binary.
+        # Called function may throw ValueError with reasons why
+        # binary cannot be found.
+        checked_binary = get_canonical_bitcoin_binary(unchecked_binary)
 
     args = [ checked_binary, "-datadir="+datadir, "-server", "-keypool=1", "-discover=0", "-rest", "-mocktime="+str(get_mocktime()) ]
     if extra_args is not None: args.extend(extra_args)
@@ -458,21 +457,17 @@ def start_nodes(num_nodes, dirname, extra_args=None, rpchost=None, timewait=None
                                    rpchost, timewait=timewait,
                                    binary=binary[i],
                                    stderr_checker=stderr_checkers[i]))
-    except ValueError as e:
-        if 'Unable to locate' in str(e):
-            # Do not raise if it's a failure to locate - just write the
-            # error message to stderr and exit.
-            # This avoids a lengthy stack trace for the user's simple
-            # misconfiguration error.
-            sys.stderr.write(str(e) + '\n')
-            sys.exit(1)
+    except UnableToLocateBitcoindError as e:
+        # Could not find bitcoind - cannot proceed with test.
+        sys.stderr.write(str(e) + '\n')
+        sys.exit(1)
         # It was some other exception - just raise it
-        raise
     except: # If one node failed to start, stop the others
         nodes_failed = True
-    finally: # If any one node has failed to start, stop others
-        if nodes_failed:
-            stop_nodes(rpcs)
+
+    # If any one node has failed to start, stop others
+    if nodes_failed:
+        stop_nodes(rpcs)
     return rpcs
 
 def log_filename(dirname, n_node, logname):
@@ -487,10 +482,9 @@ def stop_node(node, i):
     assert_equal(return_code, 0)
     del bitcoind_processes[i]
 
-def stop_nodes(nodes):
-    if nodes:
-        for i, node in enumerate(nodes):
-            stop_node(node, i)
+def stop_nodes(nodes=[]):
+    for i, node in enumerate(nodes):
+        stop_node(node, i)
     assert not bitcoind_processes.values() # All connections must be gone now
 
 def set_node_times(nodes, t):

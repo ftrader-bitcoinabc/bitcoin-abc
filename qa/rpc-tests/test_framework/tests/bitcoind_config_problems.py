@@ -11,6 +11,7 @@ import sys
 
 from test_framework.test_framework import BitcoinTestFramework, ComparisonTestFramework
 from test_framework.outputchecker import OutputChecker
+from test_framework.errors import UnableToLocateBitcoindError
 from test_framework.util import (start_node,
                                  assert_equal)
 
@@ -38,7 +39,7 @@ class ErrorBitcoindNotFound_Test (ComparisonTestFramework):
             self.nodes[0] = start_node(0, self.options.tmpdir,
                                        self.extra_args[0],
                                        binary=[nonexistent_binary])
-        except ValueError as e:
+        except UnableToLocateBitcoindError as e:
             assert_equal(str(e), "Unable to locate specified binary for " + \
                                  "this test (%s)." % nonexistent_binary + \
                                  self.blurb)
@@ -63,7 +64,7 @@ class ErrorBitcoindNotFound_Test (ComparisonTestFramework):
             self.extra_args = [["-debug"]]
             self.nodes[0] = start_node(0, self.options.tmpdir,
                                        self.extra_args[0])
-        except ValueError as e:
+        except UnableToLocateBitcoindError as e:
             assert_equal(str(e), "Unable to locate bitcoind for this test."
                                  + self.blurb)
         else:
