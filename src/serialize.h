@@ -21,7 +21,6 @@
 #include <utility>
 #include <vector>
 
-#include "prevector.h"
 
 static const unsigned int MAX_SIZE = 0x02000000;
 
@@ -380,7 +379,7 @@ public:
         pend = (char *)(v.data() + v.size());
     }
     template <unsigned int N, typename T, typename S, typename D>
-    explicit CFlatData(prevector<N, T, S, D> &v) {
+    explicit CFlatData(std::vector<T> &v) {
         pbegin = (char *)v.data();
         pend = (char *)(v.data() + v.size());
     }
@@ -472,20 +471,21 @@ void Unserialize(Stream &is, std::basic_string<C> &str);
  * prevector
  * prevectors of unsigned char are a special case and are intended to be
  * serialized as a single opaque blob.
+ * FIXME: no longer using prevector
  */
 template <typename Stream, unsigned int N, typename T>
-void Serialize_impl(Stream &os, const prevector<N, T> &v,
+void Serialize_impl(Stream &os, const std::vector<T> &v,
                     const unsigned char &);
 template <typename Stream, unsigned int N, typename T, typename V>
-void Serialize_impl(Stream &os, const prevector<N, T> &v, const V &);
+void Serialize_impl(Stream &os, const std::vector<T> &v, const V &);
 template <typename Stream, unsigned int N, typename T>
-inline void Serialize(Stream &os, const prevector<N, T> &v);
+inline void Serialize(Stream &os, const std::vector<T> &v);
 template <typename Stream, unsigned int N, typename T>
-void Unserialize_impl(Stream &is, prevector<N, T> &v, const unsigned char &);
+void Unserialize_impl(Stream &is, std::vector<T> &v, const unsigned char &);
 template <typename Stream, unsigned int N, typename T, typename V>
-void Unserialize_impl(Stream &is, prevector<N, T> &v, const V &);
+void Unserialize_impl(Stream &is, std::vector<T> &v, const V &);
 template <typename Stream, unsigned int N, typename T>
-inline void Unserialize(Stream &is, prevector<N, T> &v);
+inline void Unserialize(Stream &is, std::vector<T> &v);
 
 /**
  * vector
@@ -578,29 +578,30 @@ void Unserialize(Stream &is, std::basic_string<C> &str) {
 
 /**
  * prevector
+ * TODO: no longer prevector
  */
 template <typename Stream, unsigned int N, typename T>
-void Serialize_impl(Stream &os, const prevector<N, T> &v,
+void Serialize_impl(Stream &os, const std::vector<T> &v,
                     const unsigned char &) {
     WriteCompactSize(os, v.size());
     if (!v.empty()) os.write((char *)&v[0], v.size() * sizeof(T));
 }
 
 template <typename Stream, unsigned int N, typename T, typename V>
-void Serialize_impl(Stream &os, const prevector<N, T> &v, const V &) {
+void Serialize_impl(Stream &os, const std::vector<T> &v, const V &) {
     WriteCompactSize(os, v.size());
-    for (typename prevector<N, T>::const_iterator vi = v.begin(); vi != v.end();
+    for (typename std::vector<T>::const_iterator vi = v.begin(); vi != v.end();
          ++vi)
         ::Serialize(os, (*vi));
 }
 
 template <typename Stream, unsigned int N, typename T>
-inline void Serialize(Stream &os, const prevector<N, T> &v) {
+inline void Serialize(Stream &os, const std::vector<T> &v) {
     Serialize_impl(os, v, T());
 }
 
 template <typename Stream, unsigned int N, typename T>
-void Unserialize_impl(Stream &is, prevector<N, T> &v, const unsigned char &) {
+void Unserialize_impl(Stream &is, std::vector<T> &v, const unsigned char &) {
     // Limit size per read so bogus size value won't cause out of memory
     v.clear();
     unsigned int nSize = ReadCompactSize(is);
@@ -615,7 +616,7 @@ void Unserialize_impl(Stream &is, prevector<N, T> &v, const unsigned char &) {
 }
 
 template <typename Stream, unsigned int N, typename T, typename V>
-void Unserialize_impl(Stream &is, prevector<N, T> &v, const V &) {
+void Unserialize_impl(Stream &is, std::vector<T> &v, const V &) {
     v.clear();
     unsigned int nSize = ReadCompactSize(is);
     unsigned int i = 0;
@@ -630,7 +631,7 @@ void Unserialize_impl(Stream &is, prevector<N, T> &v, const V &) {
 }
 
 template <typename Stream, unsigned int N, typename T>
-inline void Unserialize(Stream &is, prevector<N, T> &v) {
+inline void Unserialize(Stream &is, std::vector<T> &v) {
     Unserialize_impl(is, v, T());
 }
 

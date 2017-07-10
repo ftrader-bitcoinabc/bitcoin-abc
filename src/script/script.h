@@ -7,7 +7,6 @@
 #define BITCOIN_SCRIPT_SCRIPT_H
 
 #include "crypto/common.h"
-#include "prevector.h"
 
 #include <assert.h>
 #include <climits>
@@ -382,7 +381,7 @@ private:
     int64_t m_value;
 };
 
-typedef prevector<28, unsigned char> CScriptBase;
+typedef std::vector<unsigned char> CScriptBase;
 
 /** Serialized script, used inside transaction inputs and outputs */
 class CScript : public CScriptBase {
@@ -400,8 +399,6 @@ protected:
 
 public:
     CScript() {}
-    CScript(const_iterator pbegin, const_iterator pend)
-        : CScriptBase(pbegin, pend) {}
     CScript(std::vector<unsigned char>::const_iterator pbegin,
             std::vector<unsigned char>::const_iterator pend)
         : CScriptBase(pbegin, pend) {}

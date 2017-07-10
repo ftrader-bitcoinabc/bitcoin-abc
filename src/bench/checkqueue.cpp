@@ -4,7 +4,6 @@
 
 #include "checkqueue.h"
 #include "bench.h"
-#include "prevector.h"
 #include "random.h"
 #include "util.h"
 #include "validation.h"
@@ -57,9 +56,10 @@ static void CCheckQueueSpeed(benchmark::State &state) {
 // This Benchmark tests the CheckQueue with a slightly realistic workload, where
 // checks all contain a prevector that is indirect 50% of the time and there is
 // a little bit of work done between calls to Add.
+// FIXME: no longer a prevector
 static void CCheckQueueSpeedPrevectorJob(benchmark::State &state) {
     struct PrevectorJob {
-        prevector<PREVECTOR_SIZE, uint8_t> p;
+        std::vector<uint8_t> p;
         PrevectorJob() {}
         PrevectorJob(FastRandomContext &insecure_rand) {
             p.resize(insecure_rand.rand32() % (PREVECTOR_SIZE * 2));
