@@ -24,6 +24,12 @@ static CBlock makeLargeDummyBlock(const size_t num_tx) {
     CTransaction tx;
     for (size_t i = 0; i < num_tx; i++) {
         block.vtx.push_back(MakeTransactionRef(tx));
+        // TODO: remove test output once https://reviews.bitcoinabc.org/T44
+        //       is resolved
+        if (i % 1000 == 0) {
+            std::cout << "makeLargeDummyBlock (" << num_tx << "): " << i
+                      << std::endl;
+        }
     }
     return block;
 }
