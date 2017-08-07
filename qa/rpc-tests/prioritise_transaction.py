@@ -13,8 +13,8 @@ from test_framework.util import *
 from test_framework.mininode import COIN
 from test_framework.cdefs import LEGACY_MAX_BLOCK_SIZE
 
-# far in the future
-UAHF_START_TIME = 2000000000
+# far in the past
+UAHF_START_TIME = 30000000
 
 
 class PrioritiseTransactionTest(BitcoinTestFramework):
@@ -125,7 +125,7 @@ class PrioritiseTransactionTest(BitcoinTestFramework):
         outputs[self.nodes[0].getnewaddress()] = utxo["amount"] - self.relayfee
         raw_tx = self.nodes[0].createrawtransaction(inputs, outputs)
         tx_hex = self.nodes[0].signrawtransaction(
-            raw_tx, None, None, "ALL")["hex"]
+            raw_tx, None, None, "ALL|FORKID")["hex"]
         txid = self.nodes[0].sendrawtransaction(tx_hex)
 
         # A tx that spends an in-mempool tx has 0 priority, so we can use it to
@@ -137,7 +137,7 @@ class PrioritiseTransactionTest(BitcoinTestFramework):
         outputs[self.nodes[0].getnewaddress()] = utxo["amount"] - self.relayfee
         raw_tx2 = self.nodes[0].createrawtransaction(inputs, outputs)
         tx2_hex = self.nodes[0].signrawtransaction(
-            raw_tx2, None, None, "ALL")["hex"]
+            raw_tx2, None, None, "ALL|FORKID")["hex"]
         tx2_id = self.nodes[0].decoderawtransaction(tx2_hex)["txid"]
 
         try:
