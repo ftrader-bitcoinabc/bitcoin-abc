@@ -51,10 +51,10 @@ before_install:
     # Clang does not play nice with ccache (at least the versions offered by
     # Travis), use a workaround:
     # https://github.com/travis-ci/travis-ci/issues/5383#issuecomment-224630584
-    - if [ "$TRAVIS_OS_NAME" == "linux" ]; then if [ "$CC" == "clang" ]; then sudo ln -s ../../bin/ccache /usr/lib/ccache/clang; fi; fi
-    - if [ "$TRAVIS_OS_NAME" == "linux" ]; then if [ "$CC" == "clang" ]; then export CFLAGS="-Qunused-arguments"; fi; fi
-    - if [ "$TRAVIS_OS_NAME" == "linux" ]; then if [ "$CXX" == "clang++" ]; then sudo ln -s ../../bin/ccache /usr/lib/ccache/clang++; fi; fi
-    - if [ "$TRAVIS_OS_NAME" == "linux" ]; then if [ "$CXX" == "clang++" ]; then export CXXFLAGS="-Qunused-arguments"; fi; fi
+    - if [ "$TRAVIS_OS_NAME" == "linux" ]; then if [ "$CC" == "clang-5.0" ]; then sudo ln -s ../../bin/ccache /usr/lib/ccache/clang; fi; fi
+    - if [ "$TRAVIS_OS_NAME" == "linux" ]; then if [ "$CC" == "clang-5.0" ]; then export CFLAGS="-Qunused-arguments"; fi; fi
+    - if [ "$TRAVIS_OS_NAME" == "linux" ]; then if [ "$CXX" == "clang++-5.0" ]; then sudo ln -s ../../bin/ccache /usr/lib/ccache/clang++; fi; fi
+    - if [ "$TRAVIS_OS_NAME" == "linux" ]; then if [ "$CXX" == "clang++-5.0" ]; then export CXXFLAGS="-Qunused-arguments"; fi; fi
 install:
     - if [ -n "$PPA" ]; then travis_retry sudo add-apt-repository "$PPA" -y; fi
     - if [ -n "$DPKG_ADD_ARCH" ]; then sudo dpkg --add-architecture "$DPKG_ADD_ARCH" ; fi
