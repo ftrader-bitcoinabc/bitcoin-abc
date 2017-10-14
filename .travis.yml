@@ -51,8 +51,10 @@ before_install:
     # Clang does not play nice with ccache (at least the versions offered by
     # Travis), use a workaround:
     # https://github.com/travis-ci/travis-ci/issues/5383#issuecomment-224630584
+    - if [ "$TRAVIS_OS_NAME" == "linux" ]; then if [ "$CC" == "clang-5.0" ]; then sudo rm -f /usr/bin/clang && sudo ln -s /usr/bin/clang-5.0 /usr/bin/clang; fi; fi
     - if [ "$TRAVIS_OS_NAME" == "linux" ]; then if [ "$CC" == "clang-5.0" ]; then sudo ln -s ../../bin/ccache /usr/lib/ccache/clang; fi; fi
     - if [ "$TRAVIS_OS_NAME" == "linux" ]; then if [ "$CC" == "clang-5.0" ]; then export CFLAGS="-Qunused-arguments"; fi; fi
+    - if [ "$TRAVIS_OS_NAME" == "linux" ]; then if [ "$CXX" == "clang++-5.0" ]; then sudo rm -f /usr/bin/clang++ && sudo ln -s /usr/bin/clang++-5.0 /usr/bin/clang++; fi; fi
     - if [ "$TRAVIS_OS_NAME" == "linux" ]; then if [ "$CXX" == "clang++-5.0" ]; then sudo ln -s ../../bin/ccache /usr/lib/ccache/clang++; fi; fi
     - if [ "$TRAVIS_OS_NAME" == "linux" ]; then if [ "$CXX" == "clang++-5.0" ]; then export CXXFLAGS="-Qunused-arguments"; fi; fi
 install:
@@ -85,6 +87,7 @@ script:
     - if [ -n "$USE_SHELL" ]; then export CONFIG_SHELL="$USE_SHELL"; fi
     - OUTDIR=$BASE_OUTDIR/$TRAVIS_PULL_REQUEST/$TRAVIS_JOB_NUMBER-$HOST
     - BITCOIN_CONFIG_ALL="CC=$CC CXX=$CXX --disable-dependency-tracking --prefix=$TRAVIS_BUILD_DIR/depends/$HOST --bindir=$OUTDIR/bin --libdir=$OUTDIR/lib"
+    - ls -l depends/$HOST/native/bin/ccache
     - depends/$HOST/native/bin/ccache --max-size=$CCACHE_SIZE
     - set -e
     - test -n "$USE_SHELL" && eval '"$USE_SHELL" -c "./autogen.sh"' || ./autogen.sh
