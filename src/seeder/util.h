@@ -15,6 +15,7 @@
 #define UEND(a) ((uint8_t *)&((&(a))[1]))
 #define ARRAYLEN(array) (sizeof(array) / sizeof((array)[0]))
 
+#ifndef MINGW32
 #define WSAGetLastError() errno
 #define WSAEINVAL EINVAL
 #define WSAEALREADY EALREADY
@@ -26,6 +27,7 @@
 #define WSAENOTSOCK EBADF
 #define INVALID_SOCKET (SOCKET)(~0)
 #define SOCKET_ERROR -1
+#endif
 
 template <typename T1> inline uint256 Hash(const T1 pbegin, const T1 pend) {
     static uint8_t pblank[1];
