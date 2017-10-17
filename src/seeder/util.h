@@ -15,7 +15,7 @@
 #define UEND(a) ((uint8_t *)&((&(a))[1]))
 #define ARRAYLEN(array) (sizeof(array) / sizeof((array)[0]))
 
-#ifndef MINGW32
+#if !defined(__MINGW32__)
 #define WSAGetLastError() errno
 #define WSAEINVAL EINVAL
 #define WSAEALREADY EALREADY
