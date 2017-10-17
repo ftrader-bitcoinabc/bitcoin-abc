@@ -173,7 +173,8 @@ static int write_record_a(uint8_t **outpos, const uint8_t *outend,
     *((*outpos)++) = 0;
     *((*outpos)++) = 4;
     // rdata
-    for (int i = 0; i < 4; i++)
+    int i;
+    for (i = 0; i < 4; i++)
         *((*outpos)++) = ip->data.v4[i];
     return 0;
 error:
@@ -197,7 +198,8 @@ static int write_record_aaaa(uint8_t **outpos, const uint8_t *outend,
     *((*outpos)++) = 0;
     *((*outpos)++) = 16;
     // rdata
-    for (int i = 0; i < 16; i++)
+    int i;
+    for (i = 0; i < 16; i++)
         *((*outpos)++) = ip->data.v6[i];
     return 0;
 error:
@@ -544,8 +546,8 @@ int dnsserver(dns_opt_t *opt) {
         if (ret <= 0) continue;
 
         bool handled = false;
-        for (struct cmsghdr *hdr = CMSG_FIRSTHDR(&msg); hdr;
-             hdr = CMSG_NXTHDR(&msg, hdr)) {
+        struct cmsghdr *hdr;
+        for (hdr = CMSG_FIRSTHDR(&msg); hdr; hdr = CMSG_NXTHDR(&msg, hdr)) {
             if (hdr->cmsg_level == IPPROTO_IP &&
                 hdr->cmsg_type == DSTADDR_SOCKOPT) {
                 msg.msg_iov[0].iov_base = outbuf;
