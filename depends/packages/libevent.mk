@@ -14,8 +14,9 @@ define $(package)_set_vars
   $(package)_config_opts_linux=--with-pic
   $(package)_toolset_$(host_os)=clang
   $(package)_archiver_$(host_os)=$($(package)_ar)
-  $(package)_cxxflags=-v
-  $(package)_ldflags=-v
+  $(package)_cxxflags=-std=c++11 -fvisibility=hidden -v
+  $(package)_cxxflags_linux=-fPIC -stdlib=libc++
+  $(package)_ldflags=-stdlib=libc++ -v
 endef
 
 define $(package)_config_cmds
