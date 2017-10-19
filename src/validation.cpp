@@ -805,7 +805,7 @@ static bool AcceptToMemoryPoolWorker(
         Amount nValueOut = tx.GetValueOut();
         Amount nFees = nValueIn - nValueOut;
         // nModifiedFees includes any fee deltas from PrioritiseTransaction
-        CAmount nModifiedFees = nFees.GetSatoshis();
+        Amount nModifiedFees = nFees;
         double nPriorityDummy = 0;
         pool.ApplyDeltas(txid, nPriorityDummy, nModifiedFees);
 
