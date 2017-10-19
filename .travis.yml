@@ -7,7 +7,8 @@ addons:
     sources:
       - ubuntu-toolchain-r-test
     packages:
-      - g++-8
+      - gcc-4.9
+      - g++-4.9
 cache:
   directories:
   - depends/built
@@ -26,7 +27,7 @@ env:
     - SDK_URL=https://bitcoincore.org/depends-sources/sdks
     - PYTHON_DEBUG=1
     - WINEDEBUG=fixme-all
-    - MATRIX_EVAL="CC=gcc-8 && CXX=g++-8"
+    - MATRIX_EVAL="CC=gcc-4.9 && CXX=g++-4.9"
   matrix:
 # ARM
     - HOST=arm-linux-gnueabihf PACKAGES="g++-arm-linux-gnueabihf" DEP_OPTS="NO_QT=1" CHECK_DOC=0 GOAL="install" BITCOIN_CONFIG="--enable-glibc-back-compat --enable-reduce-exports --without-seeder"
