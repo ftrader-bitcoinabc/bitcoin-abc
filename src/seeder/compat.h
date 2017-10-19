@@ -11,8 +11,8 @@
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
+#include <winsock2.h> // Must be included before mswsock.h and windows.h
 #include <mswsock.h>
-#include <winsock2.h>
 #include <ws2tcpip.h>
 #else
 #include <arpa/inet.h>
