@@ -1,5 +1,5 @@
-default_host_CC = $(host_toolchain)gcc
-default_host_CXX = $(host_toolchain)g++
+default_host_CC = $(host_toolchain)gcc-7
+default_host_CXX = $(host_toolchain)g++-7
 default_host_AR = $(host_toolchain)ar
 default_host_RANLIB = $(host_toolchain)ranlib
 default_host_STRIP = $(host_toolchain)strip
