@@ -11,7 +11,6 @@ addons:
       - libmpfr4
       - binutils
       - libisl15
-      - libisl15
 cache:
   directories:
   - depends/built
@@ -51,7 +50,7 @@ before_install:
     - sudo add-apt-repository -r ppa:ubuntu-toolchain-r/test -y
     - sudo add-apt-repository ppa:jonathonf/gcc-7.1 -y
     - sudo apt-get update -q
-    - sudo apt-get install cpp-7 binutils libmpfr4 gcc-7 g++7 -y
+    - sudo apt-get install gcc-7 g++7 -y
     - export PATH=$(echo $PATH | tr ':' "\n" | sed '/\/opt\/python/d' | tr "\n" ":" | sed "s|::|:|g")
     - export PATH=$(echo $PATH | tr ':' "\n" | sed '/\/opt\/pyenv/d' | tr "\n" ":" | sed "s|::|:|g")
     - eval "${MATRIX_EVAL}"
