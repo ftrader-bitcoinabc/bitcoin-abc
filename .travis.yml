@@ -29,7 +29,7 @@ env:
     - SDK_URL=https://bitcoincore.org/depends-sources/sdks
     - PYTHON_DEBUG=1
     - WINEDEBUG=fixme-all
-    - MATRIX_EVAL="CC=gcc-7 && CXX=g++-7"
+    - MATRIX_EVAL="CC=gcc && CXX=g++"
   matrix:
 # ARM
     - HOST=arm-linux-gnueabihf PACKAGES="g++-arm-linux-gnueabihf" DEP_OPTS="NO_QT=1" CHECK_DOC=0 GOAL="install" BITCOIN_CONFIG="--enable-glibc-back-compat --enable-reduce-exports"
@@ -55,6 +55,8 @@ install:
     - if [ -n "$DPKG_ADD_ARCH" ]; then sudo dpkg --add-architecture "$DPKG_ADD_ARCH" ; fi
     - if [ -n "$PACKAGES" ]; then travis_retry sudo apt-get update; fi
     - if [ -n "$PACKAGES" ]; then travis_retry sudo apt-get install --no-install-recommends --no-upgrade -qq $PACKAGES; fi
+    - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 50
+    - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-7 50
 before_script:
     - unset CC; unset CXX
     - eval "${MATRIX_EVAL}"
