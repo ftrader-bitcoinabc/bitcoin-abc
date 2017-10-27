@@ -41,6 +41,7 @@ env:
 before_install:
     - sudo add-apt-repository ppa:jonathonf/gcc-7.1 -y
     - sudo apt-get update -q
+    - sudo apt-get upgrade -y
     - sudo apt-get install gcc-7 g++7 -y
     - export PATH=$(echo $PATH | tr ':' "\n" | sed '/\/opt\/python/d' | tr "\n" ":" | sed "s|::|:|g")
     - export PATH=$(echo $PATH | tr ':' "\n" | sed '/\/opt\/pyenv/d' | tr "\n" ":" | sed "s|::|:|g")
