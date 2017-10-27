@@ -3,6 +3,12 @@ sudo: required
 dist: trusty
 os: linux
 language: generic
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - libisl15
 cache:
   directories:
   - depends/built
@@ -39,9 +45,10 @@ env:
     - HOST=x86_64-apple-darwin11 PACKAGES="cmake imagemagick libcap-dev librsvg2-bin libz-dev libbz2-dev libtiff-tools python-dev" BITCOIN_CONFIG="--enable-gui --enable-reduce-exports" OSX_SDK=10.11 GOAL="deploy"
 
 before_install:
+    - sudo add-apt-repository -r ppa:ubuntu-toolchain-r/test -y
     - sudo add-apt-repository ppa:jonathonf/gcc-7.1 -y
     - sudo apt-get update -q
-    - sudo apt-get install cpp-7 binutils libisl15 libmpfr4 gcc-7 g++7 -y
+    - sudo apt-get install cpp-7 binutils libmpfr4 gcc-7 g++7 -y
     - export PATH=$(echo $PATH | tr ':' "\n" | sed '/\/opt\/python/d' | tr "\n" ":" | sed "s|::|:|g")
     - export PATH=$(echo $PATH | tr ':' "\n" | sed '/\/opt\/pyenv/d' | tr "\n" ":" | sed "s|::|:|g")
     - eval "${MATRIX_EVAL}"
