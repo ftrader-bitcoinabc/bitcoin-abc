@@ -61,6 +61,7 @@ before_script:
     - export CC; export CXX
     - COMPILERS="CC=$CC CXX=$CXX"
     - if [ "$HOST" = "x86_64-apple-darwin11" ]; then unset CC; unset CXX; COMPILERS=""; fi
+    - if [ "$HOST" = "i686-pc-linux-gnu" ]; then sudo ln -s /usr/include/asm-generic /usr/include/asm ; fi
     - if [ "$CHECK_DOC" = 1 ]; then contrib/devtools/check-doc.py; fi
     - mkdir -p depends/SDKs depends/sdk-sources
     - if [ -n "$OSX_SDK" -a ! -f depends/sdk-sources/MacOSX${OSX_SDK}.sdk.tar.gz ]; then curl --location --fail $SDK_URL/MacOSX${OSX_SDK}.sdk.tar.gz -o depends/sdk-sources/MacOSX${OSX_SDK}.sdk.tar.gz; fi
